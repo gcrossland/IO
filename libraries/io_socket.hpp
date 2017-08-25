@@ -54,13 +54,23 @@ class TcpSocketAddress {
   */
   pub void getSocketAddress (core::u8string &r_r) const noexcept;
 
-  prv static void get (std::vector<TcpSocketAddress> &r_addrs, const core::u8string *nodeName, iu16f port);
+  prv static void get (std::vector<TcpSocketAddress> &r_addrs, const char8_t *nodeName, iu16f port);
   /**
     Resolves (via {@c getaddrinfo}) the given node name (be it a network hostname
     or a numerical network address string) and gets a sequence of TcpSocketAddress
     objects that each identify the given port on that node.
   */
   pub static void get (std::vector<TcpSocketAddress> &r_addrs, const core::u8string &nodeName, iu16f port);
+  /**
+    Resolves (via {@c getaddrinfo}) the given node name (be it a network hostname
+    or a numerical network address string) and gets a sequence of TcpSocketAddress
+    objects that each identify the given port on that node. The node name and port
+    are supplied in a single string, where the node name is followed by a colon
+    and then by the port number in decimal.
+
+    @throw if the node name and port string is not of the required format.
+  */
+  pub static void get (std::vector<TcpSocketAddress> &r_addrs, const core::u8string &nodeNameAndPort);
   /**
     Gets (via {@c getaddrinfo}) a sequence of TcpSocketAddress objects that each
     identify the given port on any of this host's network addresses (with the

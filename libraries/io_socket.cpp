@@ -119,7 +119,7 @@ void TcpSocketAddress::getSocketAddress (u8string &r_r) const noexcept {
 
 addrinfo EMPTY_ADDRINFO;
 
-void TcpSocketAddress::get (vector<TcpSocketAddress> &r_addrs, const u8string *nodeName, iu16f port) {
+void TcpSocketAddress::get (vector<TcpSocketAddress> &r_addrs, const char8_t *nodeName, iu16f port) {
   addrinfo hints = EMPTY_ADDRINFO;
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = TcpSocketAddress::TYPE;
@@ -131,11 +131,11 @@ void TcpSocketAddress::get (vector<TcpSocketAddress> &r_addrs, const u8string *n
   }
 
   addrinfo *addrs;
-  DW(, "resolving '", nodeName ? nodeName->c_str() : u8("<binding wildcard address>"), "':");
-  int r = getaddrinfo(nodeName ? reinterpret_cast<const char *>(nodeName->c_str()) : nullptr, nodeName ? nullptr : "0", &hints, &addrs);
+  DW(, "resolving '", nodeName ? nodeName : u8("<binding wildcard address>"), "':");
+  int r = getaddrinfo(nodeName ? reinterpret_cast<const char *>(nodeName) : nullptr, nodeName ? nullptr : "0", &hints, &addrs);
   if (r != 0) {
     u8string msg = nodeName ?
-      u8string(u8("failed to get IP address for '")) + *nodeName + u8("'") :
+      u8string(u8("failed to get IP address for '")) + nodeName + u8("'") :
       u8string(u8("failed to get any local IP addresses"))
     ;
     throw PlainException(move(msg) + createGaiStrerror(r));
@@ -180,7 +180,28 @@ void TcpSocketAddress::get (vector<TcpSocketAddress> &r_addrs, const u8string *n
 }
 
 void TcpSocketAddress::get (vector<TcpSocketAddress> &r_addrs, const u8string &nodeName, iu16f port) {
-  get(r_addrs, &nodeName, port);
+  get(r_addrs, nodeName.c_str(), port);
+}
+
+void TcpSocketAddress::get (vector<TcpSocketAddress> &r_addrs, const u8string &nodeNameAndPort) {
+  size_t i = nodeNameAndPort.rfind(u8(":")[0]);
+  if (i == u8string::npos) {
+    throw PlainException(u8string(u8("'")) + nodeNameAndPort + u8("' is not of the form host-name:port-number"));
+  }
+
+  const char8_t *begin = nodeNameAndPort.c_str();
+  const char8_t *end = begin + nodeNameAndPort.size();
+  char8_t *numberEnd;
+  long number = strtol(reinterpret_cast<const char *>(begin + i + 1), reinterpret_cast<char **>(&numberEnd), 10);
+  if (numberEnd != end || number < 0 || number > 65535) {
+    throw PlainException(u8string(u8("'")) + nodeNameAndPort + u8("' does not contain a valid port number"));
+  }
+  auto port = static_cast<iu16f>(number);
+
+  char8_t nodeName[i + 1];
+  memcpy(nodeName, begin, i);
+  nodeName[i] = u8("\0")[0];
+  get(r_addrs, nodeName, port);
 }
 
 void TcpSocketAddress::get (vector<TcpSocketAddress> &r_addrs, iu16f port) {
