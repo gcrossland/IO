@@ -69,8 +69,8 @@ TcpSocketAddress::TcpSocketAddress (const sockaddr_in6 &socketAddr6) {
 }
 
 sa_family_t TcpSocketAddress::getFamily () const noexcept {
-  DSA(static_cast<const void *>(&_) == static_cast<const void *>(&_.socketAddr4), "");
-  DSA(static_cast<const void *>(&_) == static_cast<const void *>(&_.socketAddr6), "");
+  DA(static_cast<const void *>(&_) == static_cast<const void *>(&_.socketAddr4));
+  DA(static_cast<const void *>(&_) == static_cast<const void *>(&_.socketAddr6));
   return reinterpret_cast<const sockaddr *>(&_)->sa_family;
 }
 
