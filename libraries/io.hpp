@@ -1,7 +1,7 @@
 /** @file */
 /* -----------------------------------------------------------------------------
    I/O Library
-   © Geoff Crossland 2017
+   © Geoff Crossland 2017-2022
 ----------------------------------------------------------------------------- */
 #ifndef IO_ALREADYINCLUDED
 #define IO_ALREADYINCLUDED

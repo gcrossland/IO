@@ -1,7 +1,7 @@
 #include "io_file.hpp"
 #include <cstring>
 
-namespace io { namespace file {
+namespace io::file {
 
 using core::u8string;
 using core::PlainException;
@@ -13,7 +13,7 @@ using core::numeric_limits;
 ----------------------------------------------------------------------------- */
 DC();
 
-u8string createStrerror (int errnum, const char8_t *prefix = u8(" ("), const char8_t *suffix = u8(")")) {
+u8string createStrerror (int errnum, const char8_t *prefix = u8" (", const char8_t *suffix = u8")") {
   u8string msg;
   if (errnum) {
     char b[1024];
@@ -27,7 +27,7 @@ u8string createStrerror (int errnum, const char8_t *prefix = u8(" ("), const cha
     s = r == 0 ? b : nullptr;
     #endif
 
-    if (s && s[0] != u8("\0")[0]) {
+    if (s && s[0] != u8'\0') {
       msg += prefix;
       msg += reinterpret_cast<const char8_t *>(s);
       msg += suffix;
@@ -63,7 +63,7 @@ FileStream::FileStream (const u8string &pathName, Mode mode) {
   // TODO handle path name correctly
   h = fopen(reinterpret_cast<const char *>(pathName.c_str()), m);
   if (!h) {
-    throw PlainException(u8string(u8("failed to open '")) + pathName + u8("'") + createStrerror(errno));
+    throw PlainException(u8string(u8"failed to open '") + pathName + u8"'" + createStrerror(errno));
   }
   DI(state = State::free;)
 
@@ -95,7 +95,7 @@ FileStream::~FileStream () {
 FileStream::Size FileStream::tell () const {
   long offset = ftell(h);
   if (offset == -1) {
-    throw PlainException(u8string(u8("failed to retrieve current position in file")) + createStrerror(errno));
+    throw PlainException(u8string(u8"failed to retrieve current position in file") + createStrerror(errno));
   }
   return unsign(offset);
 }
@@ -105,13 +105,13 @@ void FileStream::seek (long offset, int origin) {
   int r = fseek(h, offset, origin);
   DI(state = State::free;)
   if (r != 0) {
-    throw PlainException(u8string(u8("failed to set current position in file")) + createStrerror(errno));
+    throw PlainException(u8string(u8"failed to set current position in file") + createStrerror(errno));
   }
 }
 
 void FileStream::seek (Size offset) {
   if (offset > unsign(numeric_limits<long>::max())) {
-    throw PlainException(u8string(u8("failed to set current position in file (requested position was too big)")));
+    throw PlainException(u8string(u8"failed to set current position in file (requested position was too big)"));
   }
   seek(static_cast<long>(offset), SEEK_SET);
 }
@@ -140,7 +140,7 @@ size_t FileStream::read (iu8f *b, size_t s) {
       return numeric_limits<size_t>::max();
     }
     DA(ferror(h));
-    throw PlainException(u8string(u8("failed to read from file")) + createStrerror(errno));
+    throw PlainException(u8string(u8"failed to read from file") + createStrerror(errno));
   }
 
   return outSize;
@@ -152,7 +152,7 @@ void FileStream::write (const iu8f *b, size_t s) {
   errno = 0;
   size_t outSize = fwrite(b, 1, s, h);
   if (outSize != s) {
-    throw PlainException(u8string(u8("failed to write to file")) + createStrerror(errno));
+    throw PlainException(u8string(u8"failed to write to file") + createStrerror(errno));
   }
 }
 
@@ -164,10 +164,10 @@ void FileStream::close () {
   int r = fclose(h);
   h = nullptr;
   if (r != 0) {
-    throw PlainException(u8string(u8("failed to close file")) + createStrerror(errno));
+    throw PlainException(u8string(u8"failed to close file") + createStrerror(errno));
   }
 }
 
 /* -----------------------------------------------------------------------------
 ----------------------------------------------------------------------------- */
-}}
+}

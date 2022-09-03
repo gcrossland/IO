@@ -4,7 +4,9 @@
 #include <arpa/inet.h>
 #include <cstring>
 
-namespace io { namespace socket {
+namespace io::file { core::u8string createStrerror (int errnum, const char8_t *prefix = u8" (", const char8_t *suffix = u8")"); }
+
+namespace io::socket {
 
 using core::u8string;
 using std::tuple;
@@ -19,9 +21,6 @@ using core::numeric_limits;
 ----------------------------------------------------------------------------- */
 DC();
 
-} namespace file {
-core::u8string createStrerror (int errnum, const char8_t *prefix = u8(" ("), const char8_t *suffix = u8(")"));
-} namespace socket {
 using io::file::createStrerror;
 
 // TODO transplant + handle text properly
@@ -30,14 +29,14 @@ template<typename _i> void stringise (u8string &r_out, _i value) {
   r_out.append(reinterpret_cast<const char8_t *>(s.data()), s.size());
 }
 
-u8string createGaiStrerror (int errnum, const char8_t *prefix = u8(" ("), const char8_t *suffix = u8(")")) {
+u8string createGaiStrerror (int errnum, const char8_t *prefix = u8" (", const char8_t *suffix = u8")") {
   u8string msg;
   if (errnum) {
     // TODO handle text properly (encoding, initial letter capitalisation)
     // TODO transplant this and core::createExceptionMessage() to somewhere after local encoding handling (umain, setlocale calling etc.)
     const char *s = gai_strerror(errnum);
 
-    if (s && s[0] != u8("\0")[0]) {
+    if (s && s[0] != u8'\0') {
       msg += prefix;
       msg += reinterpret_cast<const char8_t *>(s);
       msg += suffix;
@@ -50,9 +49,9 @@ TcpSocketAddress::TcpSocketAddress (const sockaddr_in &socketAddr4) {
   _.socketAddr4 = socketAddr4;
   DPRE(getFamily() == AF_INET);
   DI(
-    u8string rep = u8("<<");
+    u8string rep = u8"<<";
     getSocketAddress(rep);
-    rep.append(u8(">>"));
+    rep.append(u8">>");
   )
   DW(, "made TcpSocketAddress - IPv4 ", rep.c_str());
 }
@@ -61,9 +60,9 @@ TcpSocketAddress::TcpSocketAddress (const sockaddr_in6 &socketAddr6) {
   _.socketAddr6 = socketAddr6;
   DPRE(getFamily() == AF_INET6);
   DI(
-    u8string rep = u8("<<");
+    u8string rep = u8"<<";
     getSocketAddress(rep);
-    rep.append(u8(">>"));
+    rep.append(u8">>");
   )
   DW(, "made TcpSocketAddress - IPv6 ", rep.c_str());
 }
@@ -108,12 +107,12 @@ void TcpSocketAddress::getSocketAddress (u8string &r_r) const noexcept {
   const char *r = inet_ntop(family, src, reinterpret_cast<char *>(repI), repMaxSize);
   if (!r) {
     r_r.erase(rSize0);
-    r_r.append(u8("????"));
+    r_r.append(u8"????");
   } else {
     r_r.erase(rSize0 + strlen(reinterpret_cast<char *>(repI)));
   }
 
-  r_r.append(u8(":"));
+  r_r.append(u8":");
   stringise(r_r, port);
 }
 
@@ -131,12 +130,12 @@ void TcpSocketAddress::get (vector<TcpSocketAddress> &r_addrs, const char8_t *no
   }
 
   addrinfo *addrs;
-  DW(, "resolving '", nodeName ? nodeName : u8("<binding wildcard address>"), "':");
+  DW(, "resolving '", nodeName ? nodeName : u8"<binding wildcard address>", "':");
   int r = getaddrinfo(nodeName ? reinterpret_cast<const char *>(nodeName) : nullptr, nodeName ? nullptr : "0", &hints, &addrs);
   if (r != 0) {
     u8string msg = nodeName ?
-      u8string(u8("failed to get IP address for '")) + nodeName + u8("'") :
-      u8string(u8("failed to get any local IP addresses"))
+      u8string(u8"failed to get IP address for '") + nodeName + u8"'" :
+      u8string(u8"failed to get any local IP addresses")
     ;
     throw PlainException(move(msg) + createGaiStrerror(r));
   }
@@ -184,9 +183,9 @@ void TcpSocketAddress::get (vector<TcpSocketAddress> &r_addrs, const u8string &n
 }
 
 void TcpSocketAddress::get (vector<TcpSocketAddress> &r_addrs, const u8string &nodeNameAndPort) {
-  size_t i = nodeNameAndPort.rfind(u8(":")[0]);
+  size_t i = nodeNameAndPort.rfind(u8':');
   if (i == u8string::npos) {
-    throw PlainException(u8string(u8("'")) + nodeNameAndPort + u8("' is not of the form host-name:port-number"));
+    throw PlainException(u8string(u8"'") + nodeNameAndPort + u8"' is not of the form host-name:port-number");
   }
 
   const char8_t *begin = nodeNameAndPort.c_str();
@@ -194,13 +193,13 @@ void TcpSocketAddress::get (vector<TcpSocketAddress> &r_addrs, const u8string &n
   char8_t *numberEnd;
   long number = strtol(reinterpret_cast<const char *>(begin + i + 1), reinterpret_cast<char **>(&numberEnd), 10);
   if (numberEnd != end || number < 0 || number > 65535) {
-    throw PlainException(u8string(u8("'")) + nodeNameAndPort + u8("' does not contain a valid port number"));
+    throw PlainException(u8string(u8"'") + nodeNameAndPort + u8"' does not contain a valid port number");
   }
   auto port = static_cast<iu16f>(number);
 
   char8_t nodeName[i + 1];
   memcpy(nodeName, begin, i);
-  nodeName[i] = u8("\0")[0];
+  nodeName[i] = u8'\0';
   get(r_addrs, nodeName, port);
 }
 
@@ -215,7 +214,7 @@ Socket::Socket (decltype(s) s) : s(s) {
 Socket::Socket (sa_family_t family, int type, int protocol) {
   s = ::socket(family, type, protocol);
   if (s == -1) {
-    throw PlainException(u8string(u8("failed to create a network socket")) + createStrerror(errno));
+    throw PlainException(u8string(u8"failed to create a network socket") + createStrerror(errno));
   }
 }
 
@@ -248,7 +247,7 @@ void Socket::bind (const TcpSocketAddress &addr) {
   tuple<const sockaddr *, socklen_t> o = addr.getSocketAddress();
   int r = ::bind(s, get<0>(o), get<1>(o));
   if (r == -1) {
-    u8string msg = u8("failed to associate a network socket with the address at which it was to listen, ");
+    u8string msg = u8"failed to associate a network socket with the address at which it was to listen, ";
     addr.getSocketAddress(msg);
     throw PlainException(move(msg) + createStrerror(errno));
   }
@@ -263,7 +262,7 @@ void Socket::listen (iu listenBacklog) {
 
   int r = ::listen(s, static_cast<int>(listenBacklog));
   if (r == -1) {
-    throw PlainException(u8string(u8("failed to make a network socket listen")) + createStrerror(errno));
+    throw PlainException(u8string(u8"failed to make a network socket listen") + createStrerror(errno));
   }
 }
 
@@ -271,7 +270,7 @@ Socket Socket::accept () {
   DPRE(s != -1);
   decltype(s) s0 = ::accept(s, nullptr, 0);
   if (s0 == -1) {
-    throw PlainException(u8string(u8("failed to accept connections to a listening network socket")) + createStrerror(errno));
+    throw PlainException(u8string(u8"failed to accept connections to a listening network socket") + createStrerror(errno));
   }
   return Socket(s0);
 }
@@ -281,7 +280,7 @@ void Socket::connect (const TcpSocketAddress &addr) {
   tuple<const sockaddr *, socklen_t> o = addr.getSocketAddress();
   int r = ::connect(s, get<0>(o), get<1>(o));
   if (r == -1) {
-    u8string msg = u8("failed to connect a network socket to ");
+    u8string msg = u8"failed to connect a network socket to ";
     addr.getSocketAddress(msg);
     throw PlainException(move(msg) + createStrerror(errno));
   }
@@ -303,7 +302,7 @@ ssize_t Socket::recv (void *buf, size_t len) {
   DPRE(s != -1);
   ssize_t r = ::recv(s, buf, len, 0);
   if (r == -1) {
-    throw PlainException(u8string(u8("failed to read from a network socket")) + createStrerror(errno));
+    throw PlainException(u8string(u8"failed to read from a network socket") + createStrerror(errno));
   }
   return r;
 }
@@ -312,7 +311,7 @@ ssize_t Socket::send (const void *buf, size_t len) {
   DPRE(s != -1);
   ssize_t r = ::send(s, buf, len, 0);
   if (r == -1) {
-    throw PlainException(u8string(u8("failed to write to a network socket")) + createStrerror(errno));
+    throw PlainException(u8string(u8"failed to write to a network socket") + createStrerror(errno));
   }
   return r;
 }
@@ -330,7 +329,7 @@ void Socket::close () {
   int r = ::close(s);
   s = -1;
   if (r == -1) {
-    throw PlainException(u8string(u8("failed to close a network socket")) + createStrerror(errno));
+    throw PlainException(u8string(u8"failed to close a network socket") + createStrerror(errno));
   }
 }
 
@@ -420,4 +419,4 @@ TcpSocketStream PassiveTcpSocket::accept (bool keepalive) {
 
 /* -----------------------------------------------------------------------------
 ----------------------------------------------------------------------------- */
-}}
+}
