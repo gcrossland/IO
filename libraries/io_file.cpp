@@ -39,19 +39,19 @@ u8string createStrerror (int errnum, const char8_t *prefix = u8(" ("), const cha
 FileStream::FileStream (const u8string &pathName, Mode mode) {
   const char *m;
   switch (mode) {
-    case READ_EXISTING:
+    case Mode::readExisting:
       m = "rb";
       break;
-    case READ_WRITE_EXISTING:
+    case Mode::readWriteExisting:
       m = "r+b";
       break;
-    case READ_WRITE_RECREATE:
+    case Mode::readWriteRecreate:
       m = "w+b";
       break;
-    case APPEND_CREATE:
+    case Mode::appendCreate:
       m = "ab";
       break;
-    case READ_APPEND_CREATE:
+    case Mode::readAppendCreate:
       m = "a+b";
       break;
     default:
@@ -65,7 +65,7 @@ FileStream::FileStream (const u8string &pathName, Mode mode) {
   if (!h) {
     throw PlainException(u8string(u8("failed to open '")) + pathName + u8("'") + createStrerror(errno));
   }
-  DI(state = FREE;)
+  DI(state = State::free;)
 
   setbuf(h, NULL);
 }
@@ -103,7 +103,7 @@ FileStream::Size FileStream::tell () const {
 void FileStream::seek (long offset, int origin) {
   errno = 0;
   int r = fseek(h, offset, origin);
-  DI(state = FREE;)
+  DI(state = State::free;)
   if (r != 0) {
     throw PlainException(u8string(u8("failed to set current position in file")) + createStrerror(errno));
   }
@@ -126,13 +126,13 @@ void FileStream::sync () {
 }
 
 size_t FileStream::read (iu8f *b, size_t s) {
-  DPRE(state == FREE || state == READING);
+  DPRE(state == State::free || state == State::reading);
   DPRE(s < numeric_limits<size_t>::max());
   if (s == 0) {
     return 0;
   }
 
-  DI(state = READING;)
+  DI(state = State::reading;)
   errno = 0;
   size_t outSize = fread(b, 1, s, h);
   if (outSize == 0) {
@@ -147,8 +147,8 @@ size_t FileStream::read (iu8f *b, size_t s) {
 }
 
 void FileStream::write (const iu8f *b, size_t s) {
-  DPRE(state == FREE || state == WRITING);
-  DI(state = WRITING;)
+  DPRE(state == State::free || state == State::writing);
+  DI(state = State::writing;)
   errno = 0;
   size_t outSize = fwrite(b, 1, s, h);
   if (outSize != s) {

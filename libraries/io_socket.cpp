@@ -122,8 +122,8 @@ addrinfo EMPTY_ADDRINFO;
 void TcpSocketAddress::get (vector<TcpSocketAddress> &r_addrs, const char8_t *nodeName, iu16f port) {
   addrinfo hints = EMPTY_ADDRINFO;
   hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = TcpSocketAddress::TYPE;
-  hints.ai_protocol = TcpSocketAddress::PROTOCOL;
+  hints.ai_socktype = TcpSocketAddress::type;
+  hints.ai_protocol = TcpSocketAddress::protocol;
   // TODO use AI_ADDRCONFIG on platforms using the RFC 2553-style omission only of DNS-found results (vs. RFC 3493)
   hints.ai_flags = 0;
   if (!nodeName) {
@@ -152,7 +152,7 @@ void TcpSocketAddress::get (vector<TcpSocketAddress> &r_addrs, const char8_t *no
     DW(, "    socktype ", i->ai_socktype);
     DW(, "    protocol ", i->ai_protocol);
     DW(, "    addrlen ", i->ai_addrlen);
-    if (i->ai_socktype != TcpSocketAddress::TYPE || i->ai_protocol != TcpSocketAddress::PROTOCOL) {
+    if (i->ai_socktype != TcpSocketAddress::type || i->ai_protocol != TcpSocketAddress::protocol) {
       continue;
     }
     DW(, "    is tcp (and stream)");
@@ -219,7 +219,7 @@ Socket::Socket (sa_family_t family, int type, int protocol) {
   }
 }
 
-Socket::Socket (const TcpSocketAddress &addr) : Socket(addr.getFamily(), TcpSocketAddress::TYPE, TcpSocketAddress::PROTOCOL) {
+Socket::Socket (const TcpSocketAddress &addr) : Socket(addr.getFamily(), TcpSocketAddress::type, TcpSocketAddress::protocol) {
 }
 
 Socket::Socket (Socket &&o) noexcept : s(-1) {

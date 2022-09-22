@@ -25,20 +25,20 @@ class FileStream {
     Specifies how much access a FileStream should have to its file and what
     should happen during construction to any existing contents of the file.
   */
-  pub enum Mode {
+  pub enum class Mode {
     // TODO more modes (extend CREATEs by doing two fopen()s?)
-    READ_EXISTING,
-    READ_WRITE_EXISTING,
-    READ_WRITE_RECREATE,
-    APPEND_CREATE,
-    READ_APPEND_CREATE
+    readExisting,
+    readWriteExisting,
+    readWriteRecreate,
+    appendCreate,
+    readAppendCreate
   };
 
   prv FILE *h;
-  DI(prv enum State {
-    FREE,
-    READING,
-    WRITING
+  DI(prv enum class State {
+    free,
+    reading,
+    writing
   } state;)
 
   pub FileStream (const core::u8string &pathName, Mode mode);

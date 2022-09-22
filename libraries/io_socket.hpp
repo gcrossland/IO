@@ -26,11 +26,11 @@ class TcpSocketAddress {
   /**
     The corresponding socket type ({@c SOCK_STREAM}).
   */
-  pub static constexpr int TYPE = SOCK_STREAM;
+  pub static constexpr int type = SOCK_STREAM;
   /**
     The corresponding protocol ({@c IPPROTO_TCP}).
   */
-  pub static constexpr int PROTOCOL = IPPROTO_TCP;
+  pub static constexpr int protocol = IPPROTO_TCP;
 
   prv union {
     sockaddr_in socketAddr4;
